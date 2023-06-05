@@ -1,14 +1,13 @@
 import axios from "axios";
-import * as $ from 'jquery';
+import * as $ from "jquery";
 
 const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
 
-const BASE_URL = "https://api.tvmaze.com/"
-const DEFAULT_IMG = "https://img.freepik.com/free-vector/vintage-tv_23-2147503075.jpg?w=2000"
-
-
+const BASE_URL = "https://api.tvmaze.com/";
+const DEFAULT_IMG =
+  "https://tinyurl.com/tv-missing";
 
 /** Given a search term, search for tv shows that match that query.
  *
@@ -17,27 +16,34 @@ const DEFAULT_IMG = "https://img.freepik.com/free-vector/vintage-tv_23-214750307
  *    (if no image URL given by API, put in a default image URL)
  */
 
-interface ShowInterface {
+interface ShowInterfaceFromAPI {
   id: number;
   name: string;
   summary: string;
-  image: string;
-}
+  image: { medium: string } | null;
+};
 
-async function getShowsByTerm(term: string) : Promise<ShowInterface[]>{
+interface ShowInterface {
+  id: number,
+  name: string,
+  summary: string,
+  image: string,
+};
+
+async function getShowsByTerm(term: string): Promise<ShowInterface[]> {
   // ADD: Remove placeholder & make request to TVMaze search shows API.
-const resp = await axios.get(`${BASE_URL}/search/shows?q=${term}`)
-return resp.data.map(show: ShowInterface{}  => {  id: show.show.id;
-  name: show.show.name;
-  summary: show.show.summary;
-  image: show.show.image.medium || DEFAULT_IMG})
+  const resp = await axios.get(`${BASE_URL}/search/shows?q=${term}`);
+
+  return resp.data.map((result: { show: ShowInterfaceFromAPI }): ShowInterface => {
+    const show = result.show;
+    return {
+      id: show.id,
+      name: show.name,
+      summary: show.summary,
+      image: show.image?.medium || DEFAULT_IMG,
+    };
+  });
 }
-
-
-
-
-
-
 
 /** Given list of shows, create markup for each and to DOM */
 
@@ -46,11 +52,11 @@ function populateShows(shows) {
 
   for (let show of shows) {
     const $show = $(
-        `<div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
+      `<div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
          <div class="media">
            <img
-              src="http://static.tvmaze.com/uploads/images/medium_portrait/160/401704.jpg"
-              alt="Bletchly Circle San Francisco"
+              src="${show.image}"
+              alt="${show.name}"
               class="w-25 me-3">
            <div class="media-body">
              <h5 class="text-primary">${show.name}</h5>
@@ -61,11 +67,12 @@ function populateShows(shows) {
            </div>
          </div>
        </div>
-      `);
+      `
+    );
 
-    $showsList.append($show);  }
+    $showsList.append($show);
+  }
 }
-
 
 /** Handle search form submission: get shows from API and display.
  *    Hide episodes area (that only gets shown if they ask for episodes)
@@ -83,7 +90,6 @@ $searchForm.on("submit", async function (evt) {
   evt.preventDefault();
   await searchForShowAndDisplay();
 });
-
 
 /** Given a show ID, get from API and return (promise) array of episodes:
  *      { id, name, season, number }
