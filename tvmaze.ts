@@ -2,6 +2,7 @@ import axios from "axios";
 import * as $ from "jquery";
 
 const $showsList = $("#showsList");
+const $episodesList = $("#episodesList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
 
@@ -32,7 +33,7 @@ interface ShowInterface {
 
 async function getShowsByTerm(term: string): Promise<ShowInterface[]> {
   // ADD: Remove placeholder & make request to TVMaze search shows API.
-  const resp = await axios.get(`${BASE_URL}/search/shows?q=${term}`);
+  const resp = await axios.get(`${BASE_URL}search/shows?q=${term}`);
 
   return resp.data.map((result: { show: ShowInterfaceFromAPI }): ShowInterface => {
     const show = result.show;
@@ -47,7 +48,7 @@ async function getShowsByTerm(term: string): Promise<ShowInterface[]> {
 
 /** Given list of shows, create markup for each and to DOM */
 
-function populateShows(shows) {
+function populateShows(shows: ShowInterface[]) {
   $showsList.empty();
 
   for (let show of shows) {
@@ -79,8 +80,8 @@ function populateShows(shows) {
  */
 
 async function searchForShowAndDisplay() {
-  const term = $("#searchForm-term").val();
-  const shows = await getShowsByTerm(term);
+  const term = $("#searchForm-term").val() as string;
+  const shows = await getShowsByTerm(term)
 
   $episodesArea.hide();
   populateShows(shows);
@@ -95,8 +96,60 @@ $searchForm.on("submit", async function (evt) {
  *      { id, name, season, number }
  */
 
-// async function getEpisodesOfShow(id) { }
+// interface EpisodeInterfaceFromAPI {
+//   id: number;
+//   name: string;
+//   summary: string;
+//   image: { medium: string } | null;
+// };
 
-/** Write a clear docstring for this function... */
+interface EpisodeInterface {
+  id: number,
+  name: string,
+  season: string,
+  number: string,
+};
 
-// function populateEpisodes(episodes) { }
+async function getEpisodesOfShow(id: number): Promise<EpisodeInterface[]> {
+  const resp = await axios.get(`${BASE_URL}shows/${id}/episodes`)
+  return resp.data.map((result:  EpisodeInterface ): EpisodeInterface => {
+    return {
+      id: result.id,
+      name: result.name,
+      season: result.season,
+      number: result.number
+    };
+  });
+ }
+
+
+/** Given list of episodes, create markup for each and append to DOM */
+
+function populateEpisodes(episodes: EpisodeInterface[]) {
+  $episodesArea.empty();
+
+  for (let episode of episodes) {
+    const $episode = $(
+      `<li id=${episode.id}>${episode.name} (season ${episode.season}, number ${episode.number})</li>
+      `
+    );
+
+    $episodesList.append($episode);
+  }
+  $episodesArea.show();
+}
+
+/** Handle button click: get episodes from API and display.
+ */
+
+async function getAndShowEpisodes() {
+
+  const episodes = getEpisodesOfShow(id)
+  populateEpisodes(episodes)
+
+}
+
+$searchForm.on("submit", async function (evt) {
+  evt.preventDefault();
+  await searchForShowAndDisplay();
+});
