@@ -12576,8 +12576,6 @@ var $episodesArea = $("#episodesArea");
 var $searchForm = $("#searchForm");
 var BASE_URL = "https://api.tvmaze.com/";
 var DEFAULT_IMG = "https://tinyurl.com/tv-missing";
-;
-;
 function getShowsByTerm(term) {
     return __awaiter(this, void 0, void 0, function () {
         var resp;
@@ -12643,13 +12641,14 @@ $searchForm.on("submit", function (evt) {
         });
     });
 });
-;
 function getEpisodesOfShow(id) {
     return __awaiter(this, void 0, void 0, function () {
         var resp;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, axios_1.default.get("".concat(BASE_URL, "shows/").concat(id, "/episodes"))];
+                case 0:
+                    console.log("getEpisodesOfShow ===", getEpisodesOfShow);
+                    return [4 /*yield*/, axios_1.default.get("".concat(BASE_URL, "shows/").concat(id, "/episodes"))];
                 case 1:
                     resp = _a.sent();
                     return [2 /*return*/, resp.data.map(function (result) {
@@ -12657,7 +12656,7 @@ function getEpisodesOfShow(id) {
                                 id: result.id,
                                 name: result.name,
                                 season: result.season,
-                                number: result.number
+                                number: result.number,
                             };
                         })];
             }
@@ -12676,30 +12675,26 @@ function populateEpisodes(episodes) {
 }
 /** Handle button click: get episodes from API and display.
  */
-function getAndShowEpisodes() {
+function getAndShowEpisodes(evt) {
     return __awaiter(this, void 0, void 0, function () {
-        var episodes;
-        return __generator(this, function (_a) {
-            episodes = getEpisodesOfShow(id);
-            populateEpisodes(episodes);
-            return [2 /*return*/];
-        });
-    });
-}
-$searchForm.on("submit", function (evt) {
-    return __awaiter(this, void 0, void 0, function () {
+        var showId, episodes;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    evt.preventDefault();
-                    return [4 /*yield*/, searchForShowAndDisplay()];
+                    showId = $(evt.target).closest(".Show").data("show-id");
+                    return [4 /*yield*/, getEpisodesOfShow(showId)];
                 case 1:
-                    _a.sent();
+                    episodes = _a.sent();
+                    console.log("eps ===", episodes);
+                    populateEpisodes(episodes);
                     return [2 /*return*/];
             }
         });
     });
-});
+}
+$showsList.on("click", ".Show-getEpisodes", getAndShowEpisodes);
+// $showsList.on("click", function () {
+// console.log("HIIIIII")});
 
 
 /***/ })
